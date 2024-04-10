@@ -44,6 +44,7 @@ class TestWebPageLogin(BaseCase):
 
     def test_search(self):
         self.test_login()
+        
         # Click on the "Clients" menu option
         autocomplete_input_xpath = "//input[@id='selector-client']"
         option_with_value_xpath = (
