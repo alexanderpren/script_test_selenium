@@ -1,13 +1,17 @@
 # Project Name
 
+SeleniumBase Test Script
+
 ## Description
 
-[Description of your project]
+This project aims to demonstrate the usage of a SeleniumBase script with Python3 for automated testing.
 
 ## Prerequisites
 
+To use this project, ensure you have the following installed:
+
 - Python 3.x
-- Virtualenv
+- Virtual Environment
 
 ## Installation
 
@@ -17,26 +21,28 @@
    git clone https://github.com/your-username/your-repo.git
    ```
 
-2. Create and activate a virtual environment:
+2.- Navigate to the project directory:
 
    ```shell
-   python3 -m venv venv
-   source venv/bin/activate
+      cd your-repo
    ```
 
-3. Install the required packages:
+3.- Install the required dependencies:
+
    ```shell
    pip install -r requirements.txt
    ```
 
-## Usage
+4.- Create and activate a virtual environment:
 
-[Instructions on how to use your project]
+   ```shell
+   python -m venv venv
+   source venv/bin/activate
+   ```
 
-## Contributing
+Usage
+To run the script, execute the following command in your terminal:
 
-[Guidelines for contributing to your project]
-
-## License
-
-[License information for your project]
+   ```shell
+   pytest first_script.py
+   ```
