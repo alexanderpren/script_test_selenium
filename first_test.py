@@ -49,20 +49,19 @@ log.addHandler(file_handler)
 
 class TestWebPageLogin(BaseCase):
     """
-    A test case for logging into a web page and performing various actions.
+    A test case class for testing web page login functionality.
 
-    This test case inherits from the `BaseCase` class and includes methods to perform login,
-    interact with elements on the page, and wait for elements to be visible.
-
-    Attributes:
-        None
+    Inherits:
+        BaseCase: The base test case class.
 
     Methods:
-        setUpClass: A class method that loads the environment variables.
-        test_login: A method that performs the login process
-        test_search_and_filters: A method that performs the search and filter process
+        __init__: Initializes the test case.
+        test_login: Tests the login functionality.
+        test_search_and_filters: Tests the search and filters functionality.
+        filter_items_by_account_or_number: Filters items by account or number.
+        filter_items_by_selecting_columns: Filters items by selecting columns and passing a value.
+        reset_filters: Resets the filters applied to a specific column in a grid.
     """
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         print("Before logging setup")
@@ -154,7 +153,9 @@ class TestWebPageLogin(BaseCase):
         self.reset_filters(COLUMN_ATTRIBUTE_FILTER)
 
         # Filter on Financial Statement column  by Cash and  Cash Equivalents
-        log.info("Filtering items by Financial Statement Column and Cash and Cash Equivalents")
+        log.info(
+            "Filtering items by Financial Statement Column and Cash and Cash Equivalents"
+        )
         self.filter_items_by_selecting_columns(
             COLUMN_FINANCIAL_STATEMENT_FILTER, FINANCIAL_STATEMENT_FILTER_VALUE
         )
@@ -211,7 +212,8 @@ class TestWebPageLogin(BaseCase):
         Filters items by selecting columns.
 
         Args:
-            None
+            column (str): The column identifier.
+            filter_value (str): The value to filter by.
 
         Returns:
             None
