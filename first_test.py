@@ -37,8 +37,10 @@ class TestWebPageLogin(BaseCase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        print("Before logging setup")  
         load_dotenv()
-        log_file_path = "py_log.log"
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        log_file_path = os.path.join(current_dir, "py_log.log")
 
         try:
             logging.basicConfig(
@@ -49,6 +51,8 @@ class TestWebPageLogin(BaseCase):
             )
         except Exception as e:
             print(f"Error setting up logging: {e}")
+        else:
+            print("Logging setup successful")  
 
      
         if os.path.exists(log_file_path):
@@ -58,7 +62,9 @@ class TestWebPageLogin(BaseCase):
 
     def test_login(self):
         # Open the web page
+        print("start test_login")
         logging.debug("Start Login Test")
+        logging.info("Start Login Test")
         try:
             self.open(os.getenv("BASE_URL"))
             self.type('input[name="email"]', os.getenv("USERNAME_TEST"))
@@ -78,6 +84,7 @@ class TestWebPageLogin(BaseCase):
             f"//ul[@role='listbox']//li[contains(text(), '{CLIENT_NAME}')]"
         )
         logging.debug("Start Search and Filter Test")
+        print("Start Search and Filter Test")
         self.type(autocomplete_input_xpath, CLIENT_NAME)
         self.click(option_with_value_xpath)
         self.wait(2)
@@ -107,6 +114,7 @@ class TestWebPageLogin(BaseCase):
         self.filter_items_by_account_or_number(ACCOUNT_NAME_TO_SEARCH)
         logging.debug("Search using input search by number")
         self.filter_items_by_account_or_number(NUMBER_TO_SEARCH)
+        print("End Search and Filter Test")
 
         # <<<<<<<<<<<<<<<    filters using columns     >>>>>>>>>>>>>>>>>>>>>>>
         # Filter on ARK Transaction column by General Expense
@@ -234,3 +242,7 @@ class TestWebPageLogin(BaseCase):
             cell.click()
             self.driver.execute_script("arguments[0].scrollLeft += 1000;", grid)
             self.wait(10)
+
+
+if __name__ == "__main__":
+    main()
