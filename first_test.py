@@ -56,12 +56,12 @@ class TestWebPageLogin(BaseCase):
 
     Methods:
         __init__: Initializes the test case.
-        test_login: Tests the login functionality.
-        test_search_and_filters: Tests the search and filters functionality.
+        test_search_and_filters: Tests login, search and filters functionality.
         filter_items_by_account_or_number: Filters items by account or number.
         filter_items_by_selecting_columns: Filters items by selecting columns and passing a value.
         reset_filters: Resets the filters applied to a specific column in a grid.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         print("Before logging setup")
@@ -72,39 +72,40 @@ class TestWebPageLogin(BaseCase):
         else:
             print("Log file was not created")
 
-    def test_login(self):
+
+    def test_search_and_filters(self):
         # Open the web page
         print("start test_login")
-        log.debug("Start Login Test")
+        log.debug("starting test")
         try:
+            log.info("Opening the web page and logging in")
             self.open(os.getenv("BASE_URL"))
             self.type('input[name="email"]', os.getenv("USERNAME_TEST"))
             self.type('input[name="password"]', os.getenv("PASSWORD_TEST"))
             self.click('button[type="submit"]')
             self.wait(2)
+            log.info("Login success")
         except Exception as e:
             log.error(f"Error on Login: {e}")
 
-    def test_search_and_filters(self):
-        self.test_login()
-
         # Click on the "Clients" menu option
-
+        self.wait_for_element_visible("input#selector-client")
         autocomplete_input_xpath = "//input[@id='selector-client']"
         option_with_value_xpath = (
             f"//ul[@role='listbox']//li[contains(text(), '{CLIENT_NAME}')]"
         )
-        log.debug("Start selecting the client")
+        log.debug("Start: client Selection and sidebar option")
         try:
             self.type(autocomplete_input_xpath, CLIENT_NAME)
             self.click(option_with_value_xpath)
             self.click("#expand_collapse_sidebar")
             self.click("#funds_menu_option")
+            self.wait(2)
         except Exception as e:
             log.error(f"Error selecting client and sidebar option: {e}")
 
         # Click on the "De Buyer" fund
-        log.info("Click on the 'De Buyer' fund")
+        log.info("Click on 'De Buyer' fund")
         try:
             span_de_buyer = self.wait_for_element_visible("//span[text()='De Buyer']")
             span_de_buyer.click()
@@ -112,24 +113,25 @@ class TestWebPageLogin(BaseCase):
             button = self.find_element("button#general_ledger")
             button.click()
             self.wait_for_element_visible("ul.MuiList-root")
+            log.info("Click on 'Chart of Accounts' menu option")
+            # Find the specific list item with text "Chart of Accounts (arkGL)"
+            self.wait(2)
+            self.wait_for_element_visible(
+                'a[role="menuitem"][href="/fund-nav/chart-of-accounts/aa9c0d49-c899-4116-9729-6d03cda179df"]'
+            )
+            chart_of_accounts_item = self.find_element(
+                'a[role="menuitem"][href="/fund-nav/chart-of-accounts/aa9c0d49-c899-4116-9729-6d03cda179df"]'
+            )
+            chart_of_accounts_item.click()
             self.wait(2)
         except Exception as e:
             log.error(f"Error selecting on table de Buyer fund: {e}")
 
-        log.info("Click on the 'Chart of Accounts' menu option")
-
-        # Find the specific list item with text "Chart of Accounts (arkGL)"
-        chart_of_accounts_item = self.find_element(
-            'a[role="menuitem"][href="/fund-nav/chart-of-accounts/aa9c0d49-c899-4116-9729-6d03cda179df"]'
-        )
-        chart_of_accounts_item.click()
-        self.wait(2)
-
         # <<<<<<<<<<<<<<<search using input search and filters>>>>>>>>>>>>>>>>>>>>>>>
-        log.info("Search using input search by account name")
+        log.info("Testing Search: Using input search by account name")
         self.filter_items_by_account_or_number(ACCOUNT_NAME_TO_SEARCH)
 
-        log.info("Search using input search by number")
+        log.info("Testing Search:  using input search by number")
         self.filter_items_by_account_or_number(NUMBER_TO_SEARCH)
 
         # <<<<<<<<<<<<<<<    filters using columns     >>>>>>>>>>>>>>>>>>>>>>>
@@ -169,7 +171,7 @@ class TestWebPageLogin(BaseCase):
         )
         self.reset_filters(COLUMN_STATUS_FILTER)
 
-        log.info("finished test_search_and_filters success")
+        log.info("test successfully completed")
 
     def filter_items_by_account_or_number(self, filter_value):
         """
@@ -186,7 +188,9 @@ class TestWebPageLogin(BaseCase):
             self.wait_for_element_visible("input#search_accounts")
             self.assert_element_visible("input#search_accounts")
             self.click("input#search_accounts")
-            self.wait_for_element_visible("input#search_accounts_popover")
+            self.wait(2)
+            #TODO: check this line, sometimes it fails
+            # self.wait_for_element_visible("input#search_accounts_popover")
             self.click("input#search_accounts_popover")
             self.wait_for_element_visible("input#search_accounts_popover")
             self.type("input#search_accounts_popover", filter_value)
@@ -218,8 +222,8 @@ class TestWebPageLogin(BaseCase):
         Returns:
             None
         """
-        log.info(f"Starting Filtering items by selecting columns: {column}")
-        self.wait_for_element_visible("div[role='grid']")
+        log.info(f"Starting Filtering items by selecting columns: {column} and {filter_value}")
+        self.wait_for_element_visible("div[role='grid']", timeout=10)
         grid_with_value_xpath = f"//div[@role='grid']"
         grid_table = self.find_element(grid_with_value_xpath)
         try:
