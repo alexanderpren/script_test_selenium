@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from dotenv import load_dotenv
 import os
 import logging
+import datetime
 from constants import (
     CLIENT_NAME,
     ACCOUNT_NAME_TO_SEARCH,
@@ -17,6 +18,33 @@ from constants import (
     COLUMN_STATUS_FILTER,
     STATUS_FILTER_VALUE,
 )
+
+# create log folder if not exists
+log_directory = "./logs"
+os.makedirs(log_directory, exist_ok=True)
+log = logging.getLogger(__name__)
+shell_handler = logging.StreamHandler()
+
+log_file_path = "./logs/%s.log" % datetime.datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
+file_handler = logging.FileHandler(log_file_path)
+
+log.setLevel(logging.INFO)
+shell_handler.setLevel(logging.INFO)
+file_handler.setLevel(logging.INFO)
+
+fmt_shell = "%(message)s"
+fmt_file = (
+    "%(levelname)s %(asctime)s [%(filename)s:%(funcName)s:%(lineno)d] %(message)s"
+)
+
+shell_formatter = logging.Formatter(fmt_shell)
+file_formatter = logging.Formatter(fmt_file)
+
+shell_handler.setFormatter(shell_formatter)
+file_handler.setFormatter(file_formatter)
+
+log.addHandler(shell_handler)
+log.addHandler(file_handler)
 
 
 class TestWebPageLogin(BaseCase):
@@ -37,24 +65,9 @@ class TestWebPageLogin(BaseCase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        print("Before logging setup")  
+        print("Before logging setup")
         load_dotenv()
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        log_file_path = os.path.join(current_dir, "py_log.log")
 
-        try:
-            logging.basicConfig(
-                filename=log_file_path,
-                filemode="a",  # Use "a" for append mode
-                format="%(asctime)s %(levelname)s:%(message)s",
-                level=logging.DEBUG
-            )
-        except Exception as e:
-            print(f"Error setting up logging: {e}")
-        else:
-            print("Logging setup successful")  
-
-     
         if os.path.exists(log_file_path):
             print(f"Log file created at: {os.path.abspath(log_file_path)}")
         else:
@@ -63,8 +76,7 @@ class TestWebPageLogin(BaseCase):
     def test_login(self):
         # Open the web page
         print("start test_login")
-        logging.debug("Start Login Test")
-        logging.info("Start Login Test")
+        log.debug("Start Login Test")
         try:
             self.open(os.getenv("BASE_URL"))
             self.type('input[name="email"]', os.getenv("USERNAME_TEST"))
@@ -72,7 +84,7 @@ class TestWebPageLogin(BaseCase):
             self.click('button[type="submit"]')
             self.wait(2)
         except Exception as e:
-            logging.error(f"Error on Login: {e}")
+            log.error(f"Error on Login: {e}")
 
     def test_search_and_filters(self):
         self.test_login()
@@ -83,24 +95,29 @@ class TestWebPageLogin(BaseCase):
         option_with_value_xpath = (
             f"//ul[@role='listbox']//li[contains(text(), '{CLIENT_NAME}')]"
         )
-        logging.debug("Start Search and Filter Test")
-        print("Start Search and Filter Test")
-        self.type(autocomplete_input_xpath, CLIENT_NAME)
-        self.click(option_with_value_xpath)
-        self.wait(2)
-        self.click("#expand_collapse_sidebar")
-        self.click("#funds_menu_option")
-        self.wait(2)
+        log.debug("Start selecting the client")
+        try:
+            self.type(autocomplete_input_xpath, CLIENT_NAME)
+            self.click(option_with_value_xpath)
+            self.click("#expand_collapse_sidebar")
+            self.click("#funds_menu_option")
+        except Exception as e:
+            log.error(f"Error selecting client and sidebar option: {e}")
 
         # Click on the "De Buyer" fund
-        logging.debug("Click on the 'De Buyer' fund")
-        span_de_buyer = self.wait_for_element_visible("//span[text()='De Buyer']")
-        span_de_buyer.click()
-        self.assert_element_visible("button#general_ledger")
-        button = self.find_element("button#general_ledger")
-        button.click()
-        self.wait_for_element_visible("ul.MuiList-root")
-        self.wait(2)
+        log.info("Click on the 'De Buyer' fund")
+        try:
+            span_de_buyer = self.wait_for_element_visible("//span[text()='De Buyer']")
+            span_de_buyer.click()
+            self.assert_element_visible("button#general_ledger")
+            button = self.find_element("button#general_ledger")
+            button.click()
+            self.wait_for_element_visible("ul.MuiList-root")
+            self.wait(2)
+        except Exception as e:
+            log.error(f"Error selecting on table de Buyer fund: {e}")
+
+        log.info("Click on the 'Chart of Accounts' menu option")
 
         # Find the specific list item with text "Chart of Accounts (arkGL)"
         chart_of_accounts_item = self.find_element(
@@ -110,43 +127,48 @@ class TestWebPageLogin(BaseCase):
         self.wait(2)
 
         # <<<<<<<<<<<<<<<search using input search and filters>>>>>>>>>>>>>>>>>>>>>>>
-        logging.debug("Search using input search by account name")
+        log.info("Search using input search by account name")
         self.filter_items_by_account_or_number(ACCOUNT_NAME_TO_SEARCH)
-        logging.debug("Search using input search by number")
+
+        log.info("Search using input search by number")
         self.filter_items_by_account_or_number(NUMBER_TO_SEARCH)
-        print("End Search and Filter Test")
 
         # <<<<<<<<<<<<<<<    filters using columns     >>>>>>>>>>>>>>>>>>>>>>>
         # Filter on ARK Transaction column by General Expense
-        # #self.filter_items_by_selecting_columns(
-        #     COLUMN_ARK_TRANSACTION_FILTER, ARK_TRANSACTION_FILTER_VALUE
-        # )
-        self.wait(2)
+        log.info("Filtering items by ARK Transaction column and General Expense value")
+        self.filter_items_by_selecting_columns(
+            COLUMN_ARK_TRANSACTION_FILTER, ARK_TRANSACTION_FILTER_VALUE
+        )
+
         # reset filters
-        # self.reset_filters(COLUMN_ARK_TRANSACTION_FILTER)
+
+        log.info("Resetting filters")
+        self.reset_filters(COLUMN_ARK_TRANSACTION_FILTER)
 
         # Filter on Attribute column by Gain/Loss - Income Statement
-        # #self.filter_items_by_selecting_columns(
-        #     COLUMN_ATTRIBUTE_FILTER, ATTRIBUTE_FILTER_VALUE
-        # )
-
-        # reset filters
-        # self.reset_filters(COLUMN_ATTRIBUTE_FILTER)
+        log.info("Filtering items by Attribute Column and Gain/Loss - Income Statement")
+        self.filter_items_by_selecting_columns(
+            COLUMN_ATTRIBUTE_FILTER, ATTRIBUTE_FILTER_VALUE
+        )
+        log.info("Resetting filters")
+        self.reset_filters(COLUMN_ATTRIBUTE_FILTER)
 
         # Filter on Financial Statement column  by Cash and  Cash Equivalents
-        # #self.filter_items_by_selecting_columns(
-        #     COLUMN_FINANCIAL_STATEMENT_FILTER, FINANCIAL_STATEMENT_FILTER_VALUE
-        # )
+        log.info("Filtering items by Financial Statement Column and Cash and Cash Equivalents")
+        self.filter_items_by_selecting_columns(
+            COLUMN_FINANCIAL_STATEMENT_FILTER, FINANCIAL_STATEMENT_FILTER_VALUE
+        )
 
-        # reset filters
-        # self.reset_filters(COLUMN_FINANCIAL_STATEMENT_FILTER)
+        self.reset_filters(COLUMN_FINANCIAL_STATEMENT_FILTER)
 
         # Filter on Status column by POSTED value
-        # #self.filter_items_by_selecting_columns(
-        #     COLUMN_STATUS_FILTER, STATUS_FILTER_VALUE
-        # )
-        # self.reset_filters(COLUMN_STATUS_FILTER)
-        # reset filters
+        log.info("Filtering items by Status Column and POSTED value")
+        self.filter_items_by_selecting_columns(
+            COLUMN_STATUS_FILTER, STATUS_FILTER_VALUE
+        )
+        self.reset_filters(COLUMN_STATUS_FILTER)
+
+        log.info("finished test_search_and_filters success")
 
     def filter_items_by_account_or_number(self, filter_value):
         """
@@ -159,10 +181,11 @@ class TestWebPageLogin(BaseCase):
             None
         """
         try:
-            logging.debug(f"Filtering items by account or number: {filter_value}")
+            log.info(f"Starting Filtering items by account or number: {filter_value}")
             self.wait_for_element_visible("input#search_accounts")
             self.assert_element_visible("input#search_accounts")
             self.click("input#search_accounts")
+            self.wait_for_element_visible("input#search_accounts_popover")
             self.click("input#search_accounts_popover")
             self.wait_for_element_visible("input#search_accounts_popover")
             self.type("input#search_accounts_popover", filter_value)
@@ -179,8 +202,9 @@ class TestWebPageLogin(BaseCase):
             for i in range(len(filter_value)):
                 self.send_keys("input#search_accounts_popover", Keys.BACKSPACE)
             self.wait(2)
+            log.info(f"Items filtered by account or number success: {filter_value}")
         except Exception as e:
-            logging.error(f"Error on filter_items_by_account_or_number: {e}")
+            log.error(f"Error on filter_items_by_account_or_number: {e}")
 
     def filter_items_by_selecting_columns(self, column, filter_value):
         """
@@ -192,11 +216,12 @@ class TestWebPageLogin(BaseCase):
         Returns:
             None
         """
+        log.info(f"Starting Filtering items by selecting columns: {column}")
         self.wait_for_element_visible("div[role='grid']")
         grid_with_value_xpath = f"//div[@role='grid']"
         grid_table = self.find_element(grid_with_value_xpath)
         try:
-            self.wait_for_element_visible(f"div#{column}", timeout=10)
+            self.wait_for_element_visible(f"div#{column}", timeout=3)
             self.click(f"div#{column}")
             self.wait_for_element_visible("div#popover_filter_text")
             self.uncheck_if_checked("label#check_all span input")
@@ -209,6 +234,7 @@ class TestWebPageLogin(BaseCase):
             cell.click()
             self.driver.execute_script("arguments[0].scrollLeft += 1000;", grid)
             self.wait(10)
+        log.info(f"Items filtered by selecting columns success: {column}")
 
     def reset_filters(self, column):
         """
@@ -223,12 +249,13 @@ class TestWebPageLogin(BaseCase):
         Returns:
             None
         """
+        log.info(f"Starting Resetting filters for column: {column}")
         self.wait_for_element_visible("div[role='grid']")
         grid_with_value_xpath = f"//div[@role='grid']"
         grid_table = self.find_element(grid_with_value_xpath)
 
         try:
-            self.wait_for_element_visible(f"div#{column}", timeout=10)
+            self.wait_for_element_visible(f"div#{column}", timeout=3)
             self.click(f"div#{column}")
             self.wait_for_element_visible("div#popover_filter_text")
             self.wait_for_element_visible("button#btn_clear")
@@ -242,6 +269,7 @@ class TestWebPageLogin(BaseCase):
             cell.click()
             self.driver.execute_script("arguments[0].scrollLeft += 1000;", grid)
             self.wait(10)
+        log.info(f"Filters reset for column success: {column}")
 
 
 if __name__ == "__main__":
