@@ -44,5 +44,5 @@ Usage
 To run the script, execute the following command in your terminal:
 
    ```shell
-   pytest first_script.py
+   pytest first_test.py
    ```
